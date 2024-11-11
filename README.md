@@ -26,27 +26,33 @@ An anonymized description of the radar CRR model implementation is available in 
 
 $$\hat{\beta} = (X^TX + \lambda I)^{-1}X^TY$$
 
-where $\lambda$ is the regularization parameter chosen by cross-validation. For uncertainty, we calculate $\frac{1}{N-p} (Y-X\hat{\beta})^T(Y-X\hat{\beta})$, with $N$ as data points per cluster and $p$ as the size of $\hat{\beta}$.
+where $\lambda$ is the regularization parameter chosen by cross-validation. For uncertainty quantification, we calculate $\frac{1}{N-p} (Y-X\hat{\beta})^T(Y-X\hat{\beta})$, with $N$ as data points per cluster and $p$ as the size of $\hat{\beta}$.
 
-Using this model, we derive $N_w$ ensembles by identifying the appropriate cluster, estimating $N_w$ using CRR, and sampling from the uncertainty distribution of that cluster. Estimates align with CORRA’s dual-frequency-based values, maintaining physical consistency across parameters. For instance, higher-than-average $N_w$ estimates are paired with lower $D_m$ values and reduced precipitation rates, consistent with the structurally imposed $N_w$-$D_m$ relationship[6].
+Using this model, we derive $N_w$ ensembles by identifying the appropriate cluster, estimating conditional averages with CRR, and sampling from the uncertainty distribution within that cluster. An analysis of CRR-derived ensembles (not shown) indicates strong consistency with CORRA’s dual-frequency retrievals and physical consistency across parameters. For example, higher-than-average $N_w$ estimates correspond to lower $D_m$ values and reduced precipitation rates. Additionally, the joint distribution of $N_w$ and $D_m$ aligns with the structurally imposed $N_w$-$D_m$ relationship [6].
 
-An illustration comparing $N_w$ and $D_m$ estimates derived from the radar CRR model against CORRA V08 reference values is shown in Figure 2. The radar CRR model performs particularly well for $D_m$, despite using only Ku-band data, whereas CORRA V08 benefits from dual-frequency data.
+An illustration comparing $N_w$ and $D_m$ estimates derived from the radar CRR model against CORRA V08 reference values is shown in Figure 2. The radar CRR model performs particularly well for $D_m$, despite using only Ku-band data, while the $N_w$ estimates are less strongly correlated to the CORRA V08 reference values given the lack of Ka-band observations.
 
 ![](logdNw_and_Dm.png)*Figure 2: Comparison of $N_w$ and $D_m$ estimates derived from the radar CRR model and CORRA V08 references, showing strong consistency, especially for $D_m$.*
 
-To address biases in ice-phase precipitation estimates, we will use a customized CORRA version where “a priori” $N_w$ for ice-phase PSDs is derived from dual-frequency reflectivity observations, based on microphysical data from the NASA IMPACTS field campaign [11]. Simulated Ku- and Ka-band observations are generated using the scattering calculations of [12]. A point-based CRR, offering uncertainty estimates, will provide $N_w$ values for this customized algorithm, which will generate the training data for the radar CRR module across precipitation types and surface conditions. We will use data only from 21 May 2018 onward to ensure dual-frequency coverage across the radar scan.
+To address biases in ice-phase precipitation estimates, we will use a customized CORRA version where “a priori” $N_w$ values for ice-phase PSDs are derived from dual-frequency reflectivity observations based on NASA IMPACTS field campaign microphysical data [11]. Specifically, we will leverage a Ku- and Ka-band reflectivity database, constructed using electromagnetic scattering calculations from [12] and IMPACTS PSDs, to refine relationships between radar observations and PSDs. A point-based CRR, which provides uncertainty estimates, will be trained on this database to supply "a priori" $N_w$ values for the customized CORRA. This version of CORRA will then generate enhanced products for training the radar CRR module across all precipitation and surface type combinations. Data collected from 21 May 2018 onward will be used to ensure dual-frequency coverage across the entire radar scan.
 
-Ultimately, the radar CRR model will replace CORRA’s first computationally intense radar-profiling iteration, delivering rapid, bias-corrected $N_w$ ensembles. Full replacement of CORRA’s radar-profiling with a CRR-based approach could be explored post-V09, potentially benefiting NASA’s AOS and INCUS missions.
+We propose that, in CORRA V9, the radar CRR model replace the computationally intensive first iteration of the radar-profiling algorithm, to enable the generation of rapid, bias-corrected $N_w$ ensembles. Full replacement of CORRA’s radar-profiling with a CRR-based approach will be explored post-V09, potentially benefiting NASA’s AOS and INCUS missions.  
 
-A detailed task list for radar CRR related activities is presented in Table 1.
+The current CORRA ensemble-based approach might be improved by incorporating a gradient-based optimization algorithm. While the ensemble-smoother avoids explicit gradient calculations, it can be suboptimal for non-linear problems when the initial ensemble is not close to the optimal solution. Developing an efficient method to estimate the Jacobians of radar and radiometer forward models would enable the use of gradient-based algorithms, such as the Levenberg-Marquardt algorithm, to refine the CORRA solution, while reducing the computational effort. We therefore propose an ML-based approach for estimating the Jacobians in these forward models, aimed at enhancing CORRA’s accuracy.
+
+We propose the use of a more general formulation of cluster-based regressions called cluster-weighted modeling (CWM) [] to estimate the gradient of the radar and radiometer forward models. Specifically, instead of hard assignments to clusters, we will use soft assignments, where each data point is associated with all clusters with varying weights [12]. The weights are modeled as probability densities, and learned through an Expectation-Maximization (EM) algorithm. The gradient of the forward model is then estimated as a weighted average of the gradients of the cluster-specific models. Unlike the CRR approach, where the Jacobians are constant within each cluster, the cluster-weighted modeling approach allows for continuous changes in the Jacobians across clusters. 
+
+To fit the CWM model, we will use the CORRA V09 product. However, as CORRA does not save the intermediate radar and radiometer forward model outputs, we will need to reconstruct them through the algorithm's physical model to generate the training data. Given that Jacobian calculations preclude the need for a full ensemble, we propose that the CWM model be run in parallel with the equivalent physical model to ensure consistency between the two. Large discrepancies would be an indication of application to points far from any of the existing clusters and would enable adaptive training by addition of aditional clusters.
+
+A detailed task list for CRR radar related activities is presented in Table 1.
 
 | Proposed Activity| Benefits  | Timeline  |
 |------------------|-----------|-----------|
 |Customize CORRA to derive improved ice-phase PSD estimates from dual-frequency radar observations  | Ubiased precipitation estimates appropriate for the training of a radar CRR model| Feb 2025 - March 2025 |
-| Develop Ku-band radar CRR model with uncertainty estimates | Fast generation of unbiased $N_w$ ensemble for CORRA V09 | March 2025 - April 2025 |
+| Develop Ku-band CRR radar model with uncertainty estimates | Fast generation of unbiased $N_w$ ensemble for CORRA V09 | March 2025 - April 2025 |
 | Integration and testing of the Ku-band radar CRR model| Improved CORRA V09 products| April 2025 - December 2025 |
-| Explore full replacement of CORRA’s radar-profiling with CRR-based approach | Potential benefits for NASA’s AOS and INCUS missions                     | 2026  |
-| Extend the CRR approach to support DL NWP data assimilation| Enhanced capabilities for future and applications| 2027  |
+| Develop CWM radar model and Jacobian calculation methdology | Faster and better exploration of the potential solution space  | 2026  |
+| Extend the CWM approach to support DL NWP data assimilation| Enhanced capabilities for future  applications| 2027  |
 
 #### 1.2.2 Radiometer Cluster-wise Ridge Regression
 
@@ -89,6 +95,8 @@ A detailed task list for radar CRR related activities is presented in Table 1.
 [11] McMurdie, L.A., Heymsfield, G.M., Yorks, J.E., Braun, S.A., Skofronick-Jackson, G., Rauber, R.M., Yuter, S., Colle, B., McFarquhar, G.M., Poellot, M. and Novak, D.R., 2022. Chasing snowstorms: The investigation of microphysics and precipitation for Atlantic coast-threatening snowstorms (IMPACTS) campaign. Bulletin of the American Meteorological Society, 103(5), pp.E1243-E1269.
 
 [12] Kuo, K.S., Olson, W.S., Johnson, B.T., Grecu, M., Tian, L., Clune, T.L., van Aartsen, B.H., Heymsfield, A.J., Liao, L. and Meneghini, R., 2016. The microwave radiative properties of falling snow derived from nonspherical ice particle models. Part I: An extensive database of simulated pristine crystals and aggregate particles, and their scattering properties. Journal of Applied Meteorology and Climatology, 55(3), pp.691-708.
+
+Gershenfeld, N.A., 1999. The nature of mathematical modeling. Cambridge university press.
 
 [13] Chase, R. J., S. W. Nesbitt, and G. M. McFarquhar, 2021: A Dual-Frequency Radar Retrieval of Two Parameters of the Snowfall Particle Size Distribution Using a Neural Network. J. Appl. Meteor. Climatol., 60, 341–359, https://doi.org/10.1175/JAMC-D-20-0177.1.
 
