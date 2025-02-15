@@ -1,8 +1,8 @@
 from netCDF4 import Dataset
 class scattTables:
-    fh=Dataset("/Users/mgrecu/myPythonPackages/lookupTables/scatteringTablesGPM.nc")
-    fhBB=Dataset("/Users/mgrecu/myPythonPackages/lookupTables/bbScatteringProp.nc")
-    fhGMI=Dataset("/Users/mgrecu/myPythonPackages/lookupTables/scatteringTablesGMI.nc")
+    fh=Dataset("/Users/XXXXX/myPythonPackages/lookupTables/scatteringTablesGPM.nc")
+    fhBB=Dataset("/Users/XXXXX/myPythonPackages/lookupTables/bbScatteringProp.nc")
+    fhGMI=Dataset("/Users/XXXXX/myPythonPackages/lookupTables/scatteringTablesGMI.nc")
     print(fhGMI)
     #freqs={10.97,19,22,37,85,166,187} [3] is Ka
     zKuR=fh["zKuR"][:289]
