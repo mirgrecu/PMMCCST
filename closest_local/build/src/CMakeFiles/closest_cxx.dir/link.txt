@@ -1,0 +1,1 @@
+/Library/Developer/CommandLineTools/usr/bin/c++ -Wall -Wextra -O3 -DNDEBUG -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -mmacosx-version-min=14.7 -dynamiclib -Wl,-headerpad_max_install_names -o libclosest_cxx.dylib -install_name /Users/mgrecu/PMMCCST/closest/build/src/libclosest_cxx.dylib CMakeFiles/closest_cxx.dir/iface.cpp.o
