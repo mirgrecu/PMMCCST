@@ -17,6 +17,25 @@ subroutine read_scaler_data()
     open(10,file="GMI_ONNX_Models/scaler_ocean_qv.bin",form="unformatted",status="old")
     read(10) scaler_land_qv%mean
     read(10) scaler_land_qv%std
+    open(10,file="GMI_ONNX_Models/norm_param_150_land.bin",form="unformatted",status="old")
+    read(10)scaler_land%tc
+    read(10)scaler_land%sfc_type
+    read(10)scaler_land%sk_temp
+    read(10)scaler_land%oe_wvp
+    read(10)scaler_land%near_sfc_precip
+    read(10)scaler_land%xenc
+    read(10)scaler_land%xenc_prec
+    read(10)scaler_land%xenv_enc
+    close(10)
+    open(10,file="GMI_ONNX_Models/norm_param_150_ocean.bin",form="unformatted",status="old")
+    read(10)scaler_ocean%tc
+    read(10)scaler_ocean%sfc_type
+    read(10)scaler_ocean%sk_temp
+    read(10)scaler_ocean%oe_wvp
+    read(10)scaler_ocean%near_sfc_precip
+    read(10)scaler_ocean%xenc
+    read(10)scaler_ocean%xenc_prec
+    read(10)scaler_ocean%xenv_enc
     close(10)
 end subroutine read_scaler_data
 
