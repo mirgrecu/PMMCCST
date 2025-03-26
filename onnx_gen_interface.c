@@ -44,6 +44,7 @@ void set_input_data_(int *model_index, int *input_index, float *data) {
         model->input_data[*input_index][i] = data[i];
     }
 }
+
 void get_output_data_(int *model_index, int *output_index, float *data) {
     ModelInfo *model = &models[*model_index];
     int i;

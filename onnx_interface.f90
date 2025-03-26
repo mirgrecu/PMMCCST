@@ -11,12 +11,12 @@ end subroutine init_onnx
 subroutine read_scaler_data()
     use scalers
     open(10,file="GMI_ONNX_Models/scaler_land_qv.bin",form="unformatted",status="old")
-    read(10) scaler_ocean_qv%mean
-    read(10) scaler_ocean_qv%std
-    close(10)
-    open(10,file="GMI_ONNX_Models/scaler_ocean_qv.bin",form="unformatted",status="old")
     read(10) scaler_land_qv%mean
     read(10) scaler_land_qv%std
+    close(10)
+    open(10,file="GMI_ONNX_Models/scaler_ocean_qv.bin",form="unformatted",status="old")
+    read(10) scaler_ocean_qv%mean
+    read(10) scaler_ocean_qv%std
     open(10,file="GMI_ONNX_Models/norm_param_150_land.bin",form="unformatted",status="old")
     read(10)scaler_land%tc
     read(10)scaler_land%sfc_type
@@ -47,6 +47,7 @@ subroutine call_dense_qv(tskin,qv,isurf,x_output)
     real :: x_input(11)
     integer :: model_index, input_index, output_index
     real,intent(out) :: x_output(4)
+
     integer :: i
     !integer :: model_index, input_index
     !print*, "tskin", tskin
@@ -68,6 +69,8 @@ subroutine call_dense_qv(tskin,qv,isurf,x_output)
             x_input(i+1)=(qv(i)-scaler_ocean_qv%mean(i+1))/scaler_ocean_qv%std(i+1)
         end do
     end if
+    print*, "x_input", x_input
+    print*, isurf, model_index
     if (isurf==1) then
         model_index=4
     else
@@ -85,6 +88,80 @@ subroutine call_dense_qv(tskin,qv,isurf,x_output)
     !print*, "x_output", x_output
     return
 end subroutine call_dense_qv
+
+
+subroutine call_map_est(x_input,isurf,x_output,x_input_scaled)
+    use scalers
+    implicit none
+    real :: qv(10), tskin
+    integer :: isurf
+    real :: x_input(150,49,19)
+    integer :: model_index, input_index, output_index
+    real,intent(out) :: x_output(150,49,12)
+    real,intent(out) :: x_input_scaled(150,49,19)
+    real :: x_input_flat(150*49*19)
+    real :: x_output_flat(150*49*12)
+    integer :: i, ic, j, k
+    !integer :: model_index, input_index
+    !print*, "tskin", tskin
+    !print*, "qv", qv
+    !print*, "isurf", isurf
+    !print*, "scaler_land_qv%mean", scaler_land_qv%mean
+    !print*, "scaler_land_qv%std", scaler_land_qv%std
+    !print*, "scaler_ocean_qv%mean", scaler_ocean_qv%mean
+    !print*, "scaler_ocean_qv%std", scaler_ocean_qv%std
+    print*, 'isurf=', isurf
+    if(isurf==1) then
+        do i=1,150
+            do j=1,49
+                x_input(i,j,1:13)=(x_input(i,j,1:13)-scaler_land%tc(1,i,j,1:13))/scaler_land%tc(2,i,j,1:13)
+                x_input(i,j,14)=(x_input(i,j,14)-scaler_land%sfc_type(1,i,j))/scaler_land%sfc_type(2,i,j)
+                x_input(i,j,15)=(x_input(i,j,15)-scaler_land%sk_temp(1,i,j))/scaler_land%sk_temp(2,i,j)
+                x_input(i,j,16:19)=(x_input(i,j,16:19)-scaler_land%xenv_enc(1,i,j,1:4))/scaler_land%xenv_enc(2,i,j,1:4)
+            end do
+        end do
+    else    
+        do i=1,150
+            do j=1,49
+                x_input(i,j,1:13)=(x_input(i,j,1:13)-scaler_ocean%tc(1,i,j,1:13))/scaler_ocean%tc(2,i,j,1:13)
+                x_input(i,j,14)=(x_input(i,j,14)-scaler_ocean%sfc_type(1,i,j))/scaler_ocean%sfc_type(2,i,j)
+                x_input(i,j,15)=(x_input(i,j,15)-scaler_ocean%sk_temp(1,i,j))/scaler_ocean%sk_temp(2,i,j)
+                x_input(i,j,16:19)=(x_input(i,j,16:19)-scaler_ocean%xenv_enc(1,i,j,1:4))/scaler_ocean%xenv_enc(2,i,j,1:4)
+            end do
+        end do
+    end if
+    x_input_scaled=x_input
+    if (isurf==1) then
+        model_index=6
+    else
+        model_index=7
+    end if
+    ic=0
+    do k=1,19
+        do i=1,150
+            do j=1,49
+                ic=ic+1
+                x_input_flat(ic)=x_input(i,j,k)
+            end do
+        end do
+    end do
+    input_index=0
+    call set_input_data(model_index, input_index, x_input_flat)
+    call call_onnx(model_index)
+    output_index=1
+    call get_output_data(model_index, output_index, x_output_flat)
+    !print*, "x_output", x_output
+    ic=0
+    do k=1,12
+        do i=1,150
+            do j=1,49
+                ic=ic+1
+                x_output(i,j,k)=x_output_flat(ic)
+            end do
+        end do
+    end do
+    return
+end subroutine call_map_est
 
 subroutine set_input_data_unet(imodel, input_data, output_data, &
     ichan_in, ichan_out, n_x, n_y)

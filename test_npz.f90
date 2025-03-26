@@ -13,6 +13,8 @@ print*, n1
 open(10,file="GMI_ONNX_Models/scaler_land_qv.bin",form="unformatted",status="replace")
 write(10) cqv_mean
 write(10) cqv_std
+print*, cqv_mean
+print*, cqv_std
 close(10)
 call npz_interface_qv(cqv_mean,cqv_std,n1,fname_ocean)
 print*, cqv_mean
@@ -21,5 +23,7 @@ print*, n1
 open(10,file="GMI_ONNX_Models/scaler_ocean_qv.bin",form="unformatted",status="replace")
 write(10) cqv_mean  
 write(10) cqv_std
+print*, cqv_mean
+print*, cqv_std
 close(10)
 end program test

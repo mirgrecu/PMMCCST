@@ -14,11 +14,15 @@ character(*),parameter :: fname='GMI_ONNX_Models/norm_param_150_land.npz'
 integer :: i
 character(*),parameter :: bin_fname='GMI_ONNX_Models/norm_param_150_land.bin'
 
+
+character(*),parameter :: fname_ocean='GMI_ONNX_Models/norm_param_150_ocean.npz'
+character(*),parameter :: bin_fname_ocean='GMI_ONNX_Models/norm_param_150_ocean.bin'
+
 i=len(fname)
 print*, i
 
 call get_norm_param(scaler%tc,scaler%sfc_type,scaler%sk_temp,scaler%oe_wvp,&
-     scaler%near_sfc_precip,scaler%xenc,scaler%xenc_prec,scaler%xenv_enc,fname(1:39))
+     scaler%near_sfc_precip,scaler%xenc,scaler%xenc_prec,scaler%xenv_enc,fname)
 open(10,file=bin_fname,form='unformatted',status='unknown')
 write(10)scaler%tc
 write(10)scaler%sfc_type
@@ -29,4 +33,19 @@ write(10)scaler%xenc
 write(10)scaler%xenc_prec
 write(10)scaler%xenv_enc
 close(10)
+
+
+call get_norm_param(scaler%tc,scaler%sfc_type,scaler%sk_temp,scaler%oe_wvp,&
+     scaler%near_sfc_precip,scaler%xenc,scaler%xenc_prec,scaler%xenv_enc,fname_ocean)
+open(10,file=bin_fname_ocean,form='unformatted',status='unknown')
+write(10)scaler%tc
+write(10)scaler%sfc_type
+write(10)scaler%sk_temp
+write(10)scaler%oe_wvp
+write(10)scaler%near_sfc_precip
+write(10)scaler%xenc
+write(10)scaler%xenc_prec
+write(10)scaler%xenv_enc
+close(10)
+
 end program scaler_p

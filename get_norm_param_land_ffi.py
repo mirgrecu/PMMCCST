@@ -20,9 +20,11 @@ def get_norm_param_(ctc,csfc_type,csk_temp,coe_wvp,cnear_sfc_precip,cxenc,cxenc_
     print(py_fname[:40])
     npz=np.load(py_fname[:40])
     tc= np.frombuffer(ffi.buffer(ctc,191100*4),np.dtype('f4')).reshape(2,150,49,13)
+    print(tc.shape)
     tc[:]=npz['tc']
+    print(npz['tc'].shape)
     sfc_type= np.frombuffer(ffi.buffer(csfc_type,14700*4),np.dtype('f4')).reshape(2,150,49)
-    sfc_type[:]=npz['sfc_type']
+    sfc_type[:]=npz['sfc_type'].astype(np.dtype('f4'))
     sk_temp= np.frombuffer(ffi.buffer(csk_temp,14700*4),np.dtype('f4')).reshape(2,150,49)
     sk_temp[:]=npz['sk_temp']
     oe_wvp= np.frombuffer(ffi.buffer(coe_wvp,14700*4),np.dtype('f4')).reshape(2,150,49)
@@ -32,7 +34,7 @@ def get_norm_param_(ctc,csfc_type,csk_temp,coe_wvp,cnear_sfc_precip,cxenc,cxenc_
     xenc= np.frombuffer(ffi.buffer(cxenc,58800*4),np.dtype('f4')).reshape(2,150,49,4)
     xenc[:]=npz['xenc']
     xenc_prec= np.frombuffer(ffi.buffer(cxenc_prec,88200*4),np.dtype('f4')).reshape(2,150,49,6)
-    xenc_prec[:]=npz['xenc_prec']
+    xenc_prec[:]=npz['xenc_prec'].astype(np.dtype('f4'))
     xenv_enc= np.frombuffer(ffi.buffer(cxenv_enc,58800*4),np.dtype('f4')).reshape(2,150,49,4)
     xenv_enc[:]=npz['xenv_enc']
 
